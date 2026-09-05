@@ -42,6 +42,34 @@ export async function saveCredentials(upstreamId, fields) {
   });
 }
 
+export async function listSecrets(upstreamId) {
+  const res = await db.execute({
+    sql: `SELECT secret_ciphertext FROM upstream_secrets WHERE upstream_id = ? ORDER BY position ASC`,
+    args: [upstreamId],
+  });
+  return res.rows;
+}
+
+export async function addSecret(upstreamId, secretCiphertext) {
+  const res = await db.execute({
+    sql: `SELECT COALESCE(MAX(position), -1) AS max_position FROM upstream_secrets WHERE upstream_id = ?`,
+    args: [upstreamId],
+  });
+  const position = Number(res.rows[0].max_position) + 1;
+  await db.execute({
+    sql: `INSERT INTO upstream_secrets (upstream_id, position, secret_ciphertext) VALUES (?, ?, ?)`,
+    args: [upstreamId, position, secretCiphertext],
+  });
+  return position;
+}
+
+export async function deleteSecret(upstreamId, position) {
+  await db.execute({
+    sql: `DELETE FROM upstream_secrets WHERE upstream_id = ? AND position = ?`,
+    args: [upstreamId, position],
+  });
+}
+
 export async function touchApiKey(id) {
   await db.execute({ sql: `UPDATE api_keys SET last_used_at = unixepoch() WHERE id = ?`, args: [id] });
 }
