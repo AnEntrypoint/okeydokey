@@ -1,0 +1,6 @@
+node_modules/
+_ref/
+*.db
+server.out.log
+server.err.log
+.gm/

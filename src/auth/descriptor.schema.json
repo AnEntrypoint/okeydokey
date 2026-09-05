@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UpstreamAuthDescriptor",
+  "description": "Data-only description of how to obtain and inject credentials for one upstream. Interpreted by one generic engine (src/auth/engine.js) via 'kind' dispatch to a strategy module — never a provider-named code path.",
+  "type": "object",
+  "required": ["kind", "inject"],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": ["static", "oauth2_client_credentials", "oauth2_authcode", "device_code", "bearer_passthrough"],
+      "description": "Which generic auth strategy interprets this descriptor. New providers reuse an existing kind; a genuinely new *mechanism* (not provider) would add one more strategy module."
+    },
+    "inject": {
+      "type": "object",
+      "description": "How the resolved credential is placed on the outbound upstream request.",
+      "required": ["location", "template"],
+      "properties": {
+        "location": { "type": "string", "enum": ["header", "query"] },
+        "name": { "type": "string", "description": "Header or query param name, e.g. Authorization, X-Api-Key, api-key, key" },
+        "template": { "type": "string", "description": "e.g. 'Bearer {token}' or '{token}'" }
+      }
+    },
+    "static": {
+      "type": "object",
+      "description": "kind=static: credential is the raw secret stored in upstream_credentials.secret_ciphertext, used verbatim.",
+      "properties": {}
+    },
+    "oauth2": {
+      "type": "object",
+      "description": "kind=oauth2_client_credentials | oauth2_authcode",
+      "properties": {
+        "token_url": { "type": "string" },
+        "authorize_url": { "type": "string" },
+        "client_id": { "type": "string" },
+        "scope": { "type": "string" },
+        "extra_params": { "type": "object" },
+        "refresh_skew_seconds": { "type": "integer", "default": 60 }
+      }
+    },
+    "device": {
+      "type": "object",
+      "description": "kind=device_code",
+      "properties": {
+        "device_authorization_url": { "type": "string" },
+        "token_url": { "type": "string" },
+        "client_id": { "type": "string" },
+        "scope": { "type": "string" },
+        "poll_interval_seconds": { "type": "integer", "default": 5 }
+      }
+    }
+  }
+}
