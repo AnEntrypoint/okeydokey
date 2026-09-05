@@ -28,6 +28,9 @@ CREATE TABLE IF NOT EXISTS upstream_credentials (
   access_token_ciphertext TEXT,
   refresh_token_ciphertext TEXT,
   expires_at INTEGER,
+  -- Set when a refresh token has been rejected as permanently invalid, so the
+  -- gateway stops paying for an exchange that cannot succeed on every request.
+  refresh_dead INTEGER NOT NULL DEFAULT 0,
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
