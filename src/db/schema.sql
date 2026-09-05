@@ -28,10 +28,25 @@ CREATE TABLE IF NOT EXISTS upstream_credentials (
   access_token_ciphertext TEXT,
   refresh_token_ciphertext TEXT,
   expires_at INTEGER,
+  -- Set when a refresh token has been rejected as permanently invalid, so the
+  -- gateway stops paying for an exchange that cannot succeed on every request.
+  refresh_dead INTEGER NOT NULL DEFAULT 0,
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
 -- A bearer key issued to a caller. Scoped to zero or more upstreams via key_grants.
+-- The rotatable credential pool for an upstream whose auth kind is a plain
+-- stored secret. Rate-limited APIs are commonly fronted by several keys for
+-- one account; holding exactly one made an exhausted key a hard outage.
+-- Position is declaration order, which is also the order they are tried.
+CREATE TABLE IF NOT EXISTS upstream_secrets (
+  upstream_id TEXT NOT NULL REFERENCES upstreams(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL,
+  secret_ciphertext TEXT NOT NULL,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  PRIMARY KEY (upstream_id, position)
+);
+
 CREATE TABLE IF NOT EXISTS api_keys (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

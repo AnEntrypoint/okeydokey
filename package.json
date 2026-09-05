@@ -10,12 +10,31 @@
     "start": "node src/server.js",
     "migrate": "node src/db/migrate.js"
   },
-  "dependencies": {
-    "floosie": "github:AnEntrypoint/floosie",
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": "./src/index.js",
+    "./keyring": "./src/keyring/index.js",
+    "./auth": "./src/auth/engine.js",
+    "./package.json": "./package.json",
+    "./device-code": "./src/auth/device-code-entry.js",
+    "./token-store": "./src/token-store/file.js"
+  },
+  "peerDependencies": {
     "@anentrypoint/design": "github:AnEntrypoint/design",
     "@libsql/client": "^0.14.0"
   },
-  "engines": {
-    "node": ">=20"
+  "peerDependenciesMeta": {
+    "@anentrypoint/design": {
+      "optional": true
+    },
+    "@libsql/client": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@anentrypoint/design": "github:AnEntrypoint/design",
+    "@libsql/client": "^0.14.0"
   }
 }

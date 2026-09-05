@@ -1,4 +1,6 @@
 import { createServer } from "node:http";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join, normalize } from "node:path";
@@ -19,6 +21,10 @@ const ROUTES = {
   "GET /api/keys": (b, q) => api.listApiKeys(q.get("userId")),
   "POST /api/grants": (b) => api.grantAccess(b),
   "DELETE /api/grants": (b) => api.revokeAccess(b),
+  "POST /api/secrets": (b) => api.addUpstreamSecret(b),
+  "DELETE /api/secrets": (b) => api.removeUpstreamSecret(b),
+  "GET /api/keyring/status": () => api.keyringStatus(),
+  "GET /api/health": () => ({ ok: true, uptimeSeconds: Math.floor(process.uptime()) }),
 };
 
 const STATIC_MIME = { ".js": "text/javascript", ".css": "text/css", ".html": "text/html", ".json": "application/json" };
@@ -53,7 +59,18 @@ async function toWebRequest(req) {
   });
 }
 
-const server = createServer(async (req, res) => {
+const server = createServer((req, res) => {
+  handleRequest(req, res).catch((err) => {
+    console.error("okeydokey request failed:", err);
+    if (res.headersSent) res.destroy();
+    else {
+      res.writeHead(502, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: String(err?.message ?? err) }));
+    }
+  });
+});
+
+async function handleRequest(req, res) {
   const [pathname, search] = req.url.split("?");
   const query = new URLSearchParams(search ?? "");
 
@@ -61,7 +78,11 @@ const server = createServer(async (req, res) => {
     const webReq = await toWebRequest(req);
     const webRes = await handleProxyRequest(webReq);
     res.writeHead(webRes.status, Object.fromEntries(webRes.headers));
-    res.end(Buffer.from(await webRes.arrayBuffer()));
+    // Piped rather than buffered: a server-sent-event upstream never closes
+    // until the whole completion is produced, so awaiting its full body would
+    // deliver a token-by-token response all at once at the end.
+    if (webRes.body) await pipeline(Readable.fromWeb(webRes.body), res);
+    else res.end();
     return;
   }
 
@@ -90,6 +111,6 @@ const server = createServer(async (req, res) => {
 
   res.writeHead(404, { "content-type": "application/json" });
   res.end(JSON.stringify({ error: "not found" }));
-});
+}
 
 server.listen(PORT, () => console.log(`okeydokey listening on :${PORT}`));
