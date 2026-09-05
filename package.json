@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "description": "Generalized bearer-key gateway: protects upstream API credentials behind caller-issued bearer keys, for any upstream auth type (static key, OAuth2, device-auth), driven entirely by config, not per-provider code.",
   "type": "module",
-  "private": true,
   "bin": {
     "okeydokey": "./bin/okeydokey.js"
   },
