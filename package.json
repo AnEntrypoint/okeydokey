@@ -10,11 +10,6 @@
     "start": "node src/server.js",
     "migrate": "node src/db/migrate.js"
   },
-  "dependencies": {
-    "floosie": "github:AnEntrypoint/floosie",
-    "@anentrypoint/design": "github:AnEntrypoint/design",
-    "@libsql/client": "^0.14.0"
-  },
   "engines": {
     "node": ">=20"
   },
@@ -23,5 +18,9 @@
     "./keyring": "./src/keyring/index.js",
     "./auth": "./src/auth/engine.js",
     "./package.json": "./package.json"
+  },
+  "optionalDependencies": {
+    "@libsql/client": "^0.14.0",
+    "@anentrypoint/design": "github:AnEntrypoint/design"
   }
 }

@@ -32,6 +32,18 @@ CREATE TABLE IF NOT EXISTS upstream_credentials (
 );
 
 -- A bearer key issued to a caller. Scoped to zero or more upstreams via key_grants.
+-- The rotatable credential pool for an upstream whose auth kind is a plain
+-- stored secret. Rate-limited APIs are commonly fronted by several keys for
+-- one account; holding exactly one made an exhausted key a hard outage.
+-- Position is declaration order, which is also the order they are tried.
+CREATE TABLE IF NOT EXISTS upstream_secrets (
+  upstream_id TEXT NOT NULL REFERENCES upstreams(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL,
+  secret_ciphertext TEXT NOT NULL,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  PRIMARY KEY (upstream_id, position)
+);
+
 CREATE TABLE IF NOT EXISTS api_keys (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
